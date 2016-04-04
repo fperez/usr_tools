@@ -18,6 +18,7 @@ CARD_DIRS = [pfx +'/'+ name for pfx in prefixes for name in CD_NAMES]
 KNOWN_EXT = set(['.jpg','.avi','.mov','.thm','.cr2'])
 
 # needed modules
+import re
 import sys
 import os
 import shutil
@@ -151,6 +152,8 @@ def main():
     if not os.path.exists(dest_dir):
         os.mkdir(dest_dir)
 
+    digits_re = re.compile(r'[^\d]*(\d+)[^\d]*')
+
     for dirpath, dirnames, all_filenames in os.walk(data_dir):
         #print('dp:', dirpath)  # dbg
         ## if not dirpath.lower().endswith('canon'):
@@ -163,6 +166,16 @@ def main():
         # Filter filenames first
         filenames = [ f for f in all_filenames if os.path.splitext(f)[1].lower()
                       in KNOWN_EXT ]
+
+        if opts.already is not None:
+            # Copy only images with a numeric identifier higher than that of
+            # images that have been already downloaded
+            to_copy = []
+            for f in filenames:
+                match = digits_re.match(f)
+                if not match or int(match.group(1)) > opts.already:
+                        to_copy.append(f)
+            filenames = to_copy
 
         nfiles = len(filenames)
         tot_files += nfiles
