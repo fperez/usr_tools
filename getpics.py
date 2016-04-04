@@ -39,14 +39,18 @@ def parse_args():
     parser = OptionParser(usage=__doc__)
     newopt = parser.add_option
 
-    newopt('-c','--card_dir',default=CARD_DIRS[0],
+    newopt('-c', '--card_dir', default=CARD_DIRS[0],
            help='CF card directory')
-    newopt('-D','--dest_dir',default=shexp(DEST_DIR),
+    newopt('-D', '--dest_dir', default=shexp(DEST_DIR),
            help='Destination directory base')
-    newopt('-g','--gthumb',action='store_true',default=False,
+    newopt('-g', '--gthumb', action='store_true', default=False,
            help='Open gthumb with the destination directory')
-    newopt('-d','--delete',action='store_true',default=False,
+    newopt('-d', '--delete', action='store_true', default=False,
            help='Delete the original pictures from the CF card')
+    newopt('-a', '--already', type=int, default=None,
+           help='Maximum numeric ID of images already copied ' +
+                '(nothing with an ID lower or equal to this will '
+                'be copied again)')
 
     return parser.parse_args()
 
@@ -153,7 +157,7 @@ def main():
         os.mkdir(dest_dir)
 
     digits_re = re.compile(r'[^\d]*(\d+)[^\d]*')
-
+        
     for dirpath, dirnames, all_filenames in os.walk(data_dir):
         #print('dp:', dirpath)  # dbg
         ## if not dirpath.lower().endswith('canon'):
