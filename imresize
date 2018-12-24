@@ -1,0 +1,88 @@
+#!/usr/bin/env python
+"""imresize: resize image files (typically for email use).
+
+This script makes a copy of each given file with specified size and jpeg
+quality, tagged with a suffix (it doesn't overwrite the input files).
+Without options, the defaults try to give small sized files for email use.
+See below for a description of options and their default values. This script
+is basically just a wrapper around ImageMagick's convert.
+"""
+
+__author__  = 'Fernando Perez'
+__email__   = 'fernando.perez@berkeley.edu'
+__version__ = '0.3'
+__date__    = '2017-04-16'
+__license__ = 'BSD'
+
+#***************************************************************************
+# Standard library modules
+import os
+import sys
+
+from argparse import ArgumentParser
+from pathlib import Path
+from subprocess import check_call
+
+
+def parse_args(argv=None):
+    """Parse command-line args and return resulting Namespace.
+    """
+    parser = ArgumentParser(description=__doc__)
+    addarg = parser.add_argument
+    addarg('--size', type=str, nargs='?', default='1280x1280',
+           help='size (bounding box) of final images, specified as HHxVV, '
+           'e.g. 1280x1280.')
+    addarg('--quality', type=int, nargs='?', default=65,
+           help='quality parameter for jpeg compression, according to '
+           'ImageMagick conventions (a number in the 0-100 range)')
+    addarg('--suffix', type=str, nargs='?', default='_sm',
+           help = 'suffix appended to each file generated. If foo.jpg is an '
+           'input file, then foo_sm.jpg will be the resized copy.')
+    addarg('--outdir', type=Path, nargs='?', default=Path('.'),
+           help = "output directory.  If it doesn't exist, it will be "
+           "automatically created with a call equivalent to `mkdir -p`")
+    addarg('filename', nargs='+')
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    """Main script entry point.
+    """
+    args = parse_args(argv)
+    print(f"args:{args}")  # dbg
+    # a few convenient shortcuts
+    size = args.size
+    quality = args.quality
+    outdir = args.outdir
+
+    if outdir.exists():
+        if not outdir.is_dir():
+            raise OSError(f'<{outdir}> must be a directory!')
+    else:
+        if outdir.resolve() != Path('.').resolve():
+            print('Making directory:', outdir)
+            outdir.mkdir(parents=True, exist_ok=True)
+
+    cmd = ['convert', '-quality', str(quality), '-size', size, '-resize', size]
+
+    print(f'Resizing images. Output size: {size}, quality: {quality}.')
+
+    for fname in map(Path, args.filename):
+        if not fname.is_file():
+            print(f'*** File {fname} does not exist, skipping.')
+            continue
+        root, ext = os.path.splitext(fname)
+        fname_out = outdir.joinpath(root + args.suffix + ext)
+        print(fname, '->', fname_out, end='')
+        check_call(cmd + [fname, fname_out])
+        insize = fname.stat().st_size
+        outsize = fname_out.stat().st_size
+        reduction = 100 - 100*outsize/insize
+        print(f': {insize/1024:g}K -> {outsize/1024:g}K, '
+              f'({round(reduction)}% reduction)')
+
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
