@@ -1,37 +1,44 @@
 #!/usr/bin/env python
 """Retrieve pictures taken with a Canon camera from a CF card.
 
-    %prog [options]"""
+    %prog [options]
+"""
 
 from __future__ import with_statement
 
+
 # Global constants
-DEST_DIR = '$HOME/digicam'
+DEST_DIR = '$HOME/media/photo/digicam'
 
-CD_NAMES = [ 'CANON_DC', 'EOS_DIGITAL', 'POWERSHOT',
-              'sda1', 'sdb1', 'sdc1', 'disk', 'dcim']
+CD_NAMES = ['CANON_DC', 'EOS_DIGITAL', 'POWERSHOT', 'NO NAME', 'LUMIX',
+            'sda1', 'sdb1', 'sdc1', 'disk', 'dcim']
 
-prefixes = ['/Volumes', '/media/fperez'] 
+prefixes = ['/Volumes', '/media/fperez']
 
-CARD_DIRS = [pfx +'/'+ name for pfx in prefixes for name in CD_NAMES]
+CARD_DIRS = [pfx + '/' + name for pfx in prefixes for name in CD_NAMES]
 
-KNOWN_EXT = set(['.jpg','.avi','.mov','.thm','.cr2'])
+KNOWN_EXT = set(['.jpg', '.avi', '.mov', '.thm', '.cr2', '.mp4'])
+
 
 # needed modules
-import re
-import sys
 import os
+import platform
+import re
 import shutil
 import time
 
 from optparse import OptionParser
 
+
 # code begins
 xsys = os.system
+
 
 def shexp(s):
     "Expand $VARS and ~names in a string, like a shell"
     return os.path.expandvars(os.path.expanduser(s))
+
+
 
 def parse_args():
     "Parse command line and return opts,args"
@@ -61,7 +68,7 @@ def make_dest_dir(base):
     Interactively queries for the new dir, which is appended to the base.  By
     default, a timestamp is used as a prefix, but this can be overridden if the
     user enters a destination starting with '/'."""
-    
+
     prefix = time.strftime("%y%m%d-")
 
     print('Base dir:', base)
@@ -72,10 +79,10 @@ def make_dest_dir(base):
         newprefix = newprefix[1:]
     else:
         newprefix = prefix + newprefix
-    return os.path.join(base,newprefix)
+    return os.path.join(base, newprefix)
 
 
-def process_raw(dirname,ext='.cr2'):
+def process_raw(dirname, ext='.cr2'):
     """Process a directory for any raw files of the given extension.
 
     - Writes a manifest.txt file with all the jpg files that have a matching
@@ -87,7 +94,7 @@ def process_raw(dirname,ext='.cr2'):
     -------
       Number of raw files moved.
     """
-    
+
     from glob import glob
     # first, find if there are any raw files in dir
     raw_files = glob(dirname+'/*%s' % ext)
@@ -106,7 +113,7 @@ def process_raw(dirname,ext='.cr2'):
     common = raw_bases.intersection(jpg_bases)
     common_jpg = sorted([f+'.jpg' for f in common])
 
-    with file(dirname+'/manifest.txt','w') as manifest:
+    with open(dirname + '/manifest.txt', 'w') as manifest:
         for f in common_jpg:
             manifest.write(os.path.split(f)[-1]+'\n')
 
@@ -116,19 +123,19 @@ def process_raw(dirname,ext='.cr2'):
         os.mkdir(raw_dir)
 
     # Move raw files to final destination and remove executable bit
-    xsys('mv %s %s' % (' '.join(raw_files),raw_dir))
-    xsys('chmod -x %s/*%s' % (raw_dir,ext))
+    xsys('mv %s %s' % (' '.join(raw_files), raw_dir))
+    xsys('chmod -x %s/*%s' % (raw_dir, ext))
 
     return len(raw_files)
 
-        
+
 def main():
     """Copy/move files from the CF card to the given destination.
 
     This script has zero error control, and works with hard-coded assumptions
     about the layout of Canon's filesystem on the CF card."""
-    
-    opts,args = parse_args()
+
+    opts, args = parse_args()
 
     for card_dir in [opts.card_dir] + CARD_DIRS:
         if os.path.isdir(card_dir):
@@ -138,7 +145,7 @@ def main():
 
     # extract a few options as locals for speed/convenience
     dest_dir = make_dest_dir(opts.dest_dir)
-    
+
     data_dir = card_dir+'/dcim'
     if not os.path.isdir(data_dir):
         data_dir = card_dir+'/DCIM'
@@ -157,7 +164,7 @@ def main():
         os.mkdir(dest_dir)
 
     digits_re = re.compile(r'[^\d]*(\d+)[^\d]*')
-        
+
     for dirpath, dirnames, all_filenames in os.walk(data_dir):
         #print('dp:', dirpath)  # dbg
         ## if not dirpath.lower().endswith('canon'):
@@ -168,8 +175,8 @@ def main():
         ##     continue
 
         # Filter filenames first
-        filenames = [ f for f in all_filenames if os.path.splitext(f)[1].lower()
-                      in KNOWN_EXT ]
+        filenames = [f for f in all_filenames
+                     if os.path.splitext(f)[1].lower() in KNOWN_EXT]
 
         if opts.already is not None:
             # Copy only images with a numeric identifier higher than that of
@@ -185,10 +192,10 @@ def main():
         tot_files += nfiles
         #print('Files to copy:', filenames) # dbg
 
-        print('%s <%s> files from <%s>' % (op_name,nfiles,dirpath))
+        print('%s <%s> files from <%s>' % (op_name, nfiles, dirpath))
         for f in filenames:
             file_op('%s/%s' % (dirpath, f),
-                    '%s/%s' % (dest_dir, f.lower()) )
+                    '%s/%s' % (dest_dir, f.lower()))
 
     print()
     print('A total of <%s> files were transferred' % tot_files)
@@ -197,16 +204,21 @@ def main():
     if nraw:
         print('  and a total of <%s> RAW files were moved to raw subdir.'
               % nraw)
-    
+
     # mode cleanup, since by default FAT32 filesystems under linux mount with
     # the execute bit on for all files
-    xsys('chmod -x %s/*jpg' % dest_dir)
+    exts = ' '.join([f'{dest_dir}/*'+e for e in KNOWN_EXT])
+    xsys(f'chmod -x {exts}')
+    
     # unmount card before exiting
-    xsys('sync')
-    #xsys('sync && umount %s' % card_dir)
+    umount = 'diskutil umount' if platform.system() == 'Darwin' else 'umount'
+    xsys(f'sync && {umount} {card_dir}')
+
+    # Open destination directory
     if opts.gthumb:
         xsys('gthumb %s &' % dest_dir)
+    xsys(f'open {dest_dir}')
 
-    
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()
