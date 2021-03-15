@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+"""Remove empty subdirectories of the current directory
+"""
+
+import os
+from pathlib import Path
+from shutil import rmtree
+
+
+for sd in Path(os.getcwd()).iterdir():
+    if sd.is_dir() and len(list(sd.iterdir())) == 0:
+        print("Removing empty dir:", sd)
+        rmtree(sd)

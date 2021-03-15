@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Config vars
+dirs_to_backup="Users/fperez"
+target_store_dir=backups/ritacuba
+
+exclude="--exclude-from=/Users/fperez/usr/bin/backup-ritacuba.excludes"
+
+
+# Run actual script
+. /Users/fperez/usr/bin/backup_core

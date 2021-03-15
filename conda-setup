@@ -1,0 +1,25 @@
+#!/bin/bash
+
+#conda update --all --yes
+
+#conda install --yes mamba
+
+# NOTE: the following install assumes that it's being run in a conda-forge
+# configuration, as some of these packages are not available in the default
+# Anaconda channel.
+
+conda install --yes jupyter jupyterlab \
+      ipympl ipycanvas \
+      scikit-image scikit-learn sympy networkx \
+      statsmodels pandas seaborn xlrd xarray pytables cython numba \
+      geopandas h5py \
+      jedi pep8 flake8 pyflakes pylint pytest requests yaml sphinx \
+      dask distributed ipyparallel \
+      altair bokeh plotly plotly_express \
+      black fortran-magic \
+      nodejs lxml
+
+# Conda will try to pull in all of Julia itself, so pyjulia is best pulled
+# via pip
+
+pip install julia

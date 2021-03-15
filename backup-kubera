@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Backup data *from* Kubera into this system, to the /data/fperez/backup_kubera
+# directory
+
+# Config vars
+source_base_dir=/nas
+dirs_to_backup="fun_plug ffp home pub www"
+target_base_dir="/data/fperez/"
+target_store_dir=backup_kubera
+
+# Try to mount the nas if needed
+sudo mount /nas
+if [ $? == 0 ]; then {
+	echo "/nas mounted, will be unmounted at end of script"
+	mounted="yes"
+    } else {
+	echo "/nas not mounted by us, will be left alone"
+	mounted="no"
+}
+fi
+
+# Run actual script
+. /home/fperez/usr/bin/backup_core
+
+if [ "$mounted" == "yes" ]; then {
+	echo "unmounting /nas"
+	sudo umount /nas
+    } fi

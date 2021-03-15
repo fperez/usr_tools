@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Simple backup script that calls the other ones to bundle all my desktop
+# backup process into a single executable
+
+# This script must be run as a normal user, it makes sudo calls as needed.
+
+###########################################################################
+# Main code
+
+t1=`date`
+echo "*** Backup starting at: $t1"
+echo
+
+# Backup internal NAS state to desktop
+sudo /home/fperez/usr/bin/backup-kubera
+
+# Run the full backup out to the external disk
+sudo /home/fperez/usr/bin/backup-desktop
+
+t2=`date`
+
+echo
+echo '******************************'
+echo '*** DONE: Full home backup ***'
+echo '******************************'
+echo "Start time: $t1"
+echo "End time  : $t2"
+echo '******************************'
+
+pydf

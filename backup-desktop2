@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Version that avoids flac2mp3 directories to fit in smaller ext drive.
+
+# Config vars
+dirs_to_backup="etc home data"
+target_store_dir=backups/desktop
+
+exclude="--exclude=.gvfs --exclude=lost+found --exclude=.cache --exclude=.mozilla --exclude=.thunderbird --exclude=flac2mp3-low-quality --exclude=flac2mp3-high-quality "
+
+# Run actual script
+. /home/fperez/usr/bin/backup_core

@@ -1,0 +1,85 @@
+#!/usr/bin/env python
+"""Simple wrapper around flac2mp3.pl.
+
+Calls with preset input and output dirs as well as Lame options.
+
+Usage:
+
+    flac2mp3 [high|low]
+
+If mode option is not given, default is 'high'.
+"""
+
+import datetime as dt
+import os
+import time
+import sys
+
+from pathlib import Path
+from subprocess import check_call as ccall
+
+#-----------------------------------------------------------------------------
+# Read cmd line flag for mode
+#-----------------------------------------------------------------------------
+try:
+    mode = sys.argv[1]
+except IndexError:
+    mode = 'high'
+
+if mode not in ('high', 'low'):
+    print(__doc__)
+    print("ERROR: Mode must be one of 'high', 'low', %r given." % mode)
+    sys.exit(1)
+
+#-----------------------------------------------------------------------------
+# Configuration
+#-----------------------------------------------------------------------------
+
+# Source directory
+home = Path('/Users/fperez')
+music = home / 'media/music'
+flac_dir = music / 'flac'
+
+# Flac2mp3 source installation path
+flac2mp3_dir = home / 'usr/local/flac2mp3'
+
+# Number of simultenous encoding processes to use
+nproc = 8
+
+# Output dir, doesn't need to previously exist (flac2mp3.pl will make it)
+mp3_dir = music / f'flac2mp3-{mode}-quality-new'
+
+# Arguments for high-quality encoding. V=0 is highest quality -B is max allowed
+# bitrate in VBR, -b is lowest allowed
+baseargs = '-h -v'
+
+if mode == 'low':
+    encodeargs = '-V 5 -B 160'
+elif mode == 'high':
+    encodeargs = '-V 0 -b 160 -B 320'
+
+lameargs = ' '.join([baseargs, encodeargs])
+    
+#-----------------------------------------------------------------------------
+# Code Starts Here
+#-----------------------------------------------------------------------------
+
+# Simple function for computing time differences
+tdiff = lambda t0, t1: dt.datetime(*t1[:6]) - dt.datetime(*t0[:6])
+
+os.environ['PATH'] = str(flac2mp3_dir) + ':' + os.environ['PATH']
+
+cmd = (f'time flac2mp3.pl --processes={nproc} --lameargs="{lameargs}" '
+       f'{flac_dir} {mp3_dir}')
+
+#-----------------------------------------------------------------------------
+# Run
+#-----------------------------------------------------------------------------
+
+# Call cmd with timing info
+t0 = time.localtime()
+print("CMD:\n", cmd)
+ccall(cmd, shell=True)
+t1 = time.localtime()
+
+print('Total time:', tdiff(t0, t1))

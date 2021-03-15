@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Configure variables for backup script
+target_store_dir=backups/laptop
+exclude="--exclude=fperez/media --exclude=fperez/.gvfs \
+--exclude=fperez/fp/photo --exclude=fperez/research/data \
+--exclude=fperez/usr/Dropbox --exclude=fperez/usr/grive"
+
+# TEMP: backup to desktop directory.
+target_store_dir=backups/desktop
+
+# Run actual script
+. /home/fperez/usr/bin/backup_core

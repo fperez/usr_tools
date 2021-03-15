@@ -17,7 +17,7 @@ prefixes = ['/Volumes', '/media/fperez']
 
 CARD_DIRS = [pfx + '/' + name for pfx in prefixes for name in CD_NAMES]
 
-KNOWN_EXT = set(['.jpg', '.avi', '.mov', '.thm', '.cr2', '.mp4'])
+KNOWN_EXT = set(['.jpg', '.avi', '.mov', '.thm', '.cr2', '.mp4', '.rw2'])
 
 
 # needed modules
@@ -82,7 +82,7 @@ def make_dest_dir(base):
     return os.path.join(base, newprefix)
 
 
-def process_raw(dirname, ext='.cr2'):
+def process_raw(dirname, ext='.rw2'):
     """Process a directory for any raw files of the given extension.
 
     - Writes a manifest.txt file with all the jpg files that have a matching

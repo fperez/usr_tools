@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Unless this option is given, aliases aren't expanded
+# inside shell scripts
+
+shopt -s expand_aliases
+alias bi="brew install"
+alias bc='brew install --cask' 
+
+# Plain homebrew (cmd line) tools
+bi rsync tmux git hub htop emacs
+bi imagemagick
+bi menumeters
+
+# Cask (gui) installs
+bc firefox visual-studio-code zoom obs slack
+bc google-backup-and-sync dropbox
+bc lyx mactex 
+bc vlc spotify
+bc spectacle monitorcontrol flux keepassx

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Make all files below this path not be executable
+find . -type f -print0 | xargs -0  chmod -x

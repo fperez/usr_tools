@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Config vars
+dirs_to_backup="etc home data"
+target_store_dir=backups/desktop
+
+# Run actual script
+. /home/fperez/usr/bin/backup_core

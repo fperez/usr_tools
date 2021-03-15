@@ -1,0 +1,103 @@
+#!/bin/bash
+
+###########################################################################
+# Synchronize the local backups directory to an external hard disk.
+
+# Fernando Perez <fernando.perez@colorado.edu>
+
+###########################################################################
+# Config vars
+source_base_dir=${source_base_dir-/}
+dirs_to_backup=${dirs_to_backup-"etc home opt root usr/local"}
+
+target_base_dir=${target_base_dir-/Volumes/WDSilverData/}
+target_store_dir=${target_store_dir-backups}
+
+# use "--exclude=foo --excluce=bar" syntax. You MUST always list .gvfs
+# or else i/o errors will be thrown, which disable file deletion on the
+# target device and eventually will make it run out of space
+exclude=${exclude-"--exclude=.gvfs --exclude=lost+found --exclude=.cache --exclude=.mozilla --exclude=.thunderbird --exclude=.DS_Store --exclude=.Trash"}
+
+rsync_cmd=${rsync_cmd-"nice -n 19 rsync -avHE --xattrs --progress --relative --delete"}
+
+###########################################################################
+# Functions
+validate() {
+    if [ ! -e $1 ]
+        then
+            echo "*** ERROR ***"
+            echo "The target file or directory: $1"
+            echo "does not exist."
+            echo "Aborting."
+            exit 1
+        fi
+    return 0
+}
+
+check_root() {
+    if [ `id -u` != "0" ]
+        then
+            echo "*** ERROR ***"
+            echo "This program must be run as root."
+            echo "Aborting."
+            exit 1
+        fi
+    return 0
+}
+
+###########################################################################
+# Main code
+
+check_root
+
+t1=`date`
+
+echo "*** extbackup starting at: $t1"
+echo
+echo "    Configuration:"
+echo "      source_base_dir   = $source_base_dir"
+echo "      dirs_to_backup    = $dirs_to_backup"
+echo "      target_base_dir   = $target_base_dir"
+echo "      target_store_dir  = $target_store_dir"
+echo "      rsync_cmd         = $rsync_cmd"
+echo "      exclude           = $exclude"
+
+#exit 1 # dbg
+
+# Validate that all sources and targets exist
+external_dir=$target_base_dir/$target_store_dir
+validate $external_dir
+for target in $dirs_to_backup
+    do
+        validate $source_base_dir/$target
+    done
+
+# Proceed with sync
+for target in $dirs_to_backup
+    do
+        logpath=`echo $target | sed 's/\//_/g'`
+        logfile=${external_dir}/${logpath}.log
+        echo
+	echo '----------------------------------------------------------'
+	echo "Date   : `date`"
+        echo "Target : $target"
+        echo "Logfile: $logfile"
+        echo "CMD: $rsync_cmd $exclude $source_base_dir/$target $external_dir | tee $logfile"
+        $rsync_cmd $exclude $source_base_dir/$target $external_dir | tee $logfile
+    done
+
+# Cleanup
+echo
+echo '----------------------------------------------------------'
+echo "Syncing external disk..."
+sync
+
+t2=`date`
+
+echo
+echo '***********************'
+echo '*** DONE: extbackup ***'
+echo '***********************'
+echo "Start time: $t1"
+echo "End time  : $t2"
+echo '***********************'
